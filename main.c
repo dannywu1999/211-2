@@ -7,7 +7,7 @@
 #include <cblas.h>
 #include <string.h>
 
-int mydgetrf(double *A, int *PVT, int n)
+int mydgetrf(double *A, int *ipiv, int n)
 {
     int i, maxIndex;
     double max;
@@ -37,9 +37,9 @@ int mydgetrf(double *A, int *PVT, int n)
             if (maxIndex != i)
             {
                 // save pivoting information
-                int temp = PVT[i];
-                PVT[i] = PVT[maxIndex];
-                PVT[maxIndex] = temp;
+                int temp = ipiv[i];
+                ipiv[i] = ipiv[maxIndex];
+                ipiv[maxIndex] = temp;
                 // swap rows
                 memcpy(temprow, A + i*n, n * sizeof(double));
                 memcpy(A + i*n, A + maxIndex*n, n * sizeof(double));
@@ -62,14 +62,14 @@ int mydgetrf(double *A, int *PVT, int n)
     return 0;
 }
 
-void mydtrsm(char UPLO, double *A, double *B, int n, int *PVT)
+void mydtrsv(char UPLO, double *A, double *B, int n, int *ipiv)
 {
     double *y = (double*) malloc(n * sizeof(double));
     int i, j;
     double sum;
     if (UPLO == 'L')
     {
-        y[0] = B[PVT[0]];
+        y[0] = B[ipiv[0]];
         for (i = 1; i < n; i++)
         {
             sum = 0.0;
@@ -77,7 +77,7 @@ void mydtrsm(char UPLO, double *A, double *B, int n, int *PVT)
             {
                 sum += y[j] * A[i*n + j];
             }
-            y[i] = B[PVT[i]] - sum;
+            y[i] = B[ipiv[i]] - sum;
         }
     }
     else if (UPLO == 'U')
@@ -162,7 +162,7 @@ void dgemm3_cache_mod(double *a, double *b, double *c, int n, int i, int j, int 
     }
 }
 
-int mydgetrf_block(double *A, int *PVT, int n, int b)
+int mydgetrf_block(double *A, int *ipiv, int n, int b)
 {
     int ib, i, j, k, maxIndex;
     double max, sum;
@@ -195,9 +195,9 @@ int mydgetrf_block(double *A, int *PVT, int n, int b)
                 if (maxIndex != i)
                 {
                     // save pivoting information
-                    int temp = PVT[i];
-                    PVT[i] = PVT[maxIndex];
-                    PVT[maxIndex] = temp;
+                    int temp = ipiv[i];
+                    ipiv[i] = ipiv[maxIndex];
+                    ipiv[maxIndex] = temp;
                     // swap rows
                     memcpy(temprow, A + i*n, n * sizeof(double));
                     memcpy(A + i*n, A + maxIndex*n, n * sizeof(double));
